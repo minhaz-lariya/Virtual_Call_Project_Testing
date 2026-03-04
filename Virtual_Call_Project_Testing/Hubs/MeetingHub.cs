@@ -21,7 +21,7 @@ namespace Virtual_Call_Project_Testing.Hubs
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
 
-            // Map userId to latest connectionId (important for reconnect)
+            // Map userId to latest connectionId
             UserConnections[userId] = Context.ConnectionId;
 
             // Add participant to room
@@ -36,6 +36,7 @@ namespace Virtual_Call_Project_Testing.Hubs
                 Console.WriteLine($"TEACHER REGISTERED: {roomId}");
             }
 
+            // Notify everyone in room about participants (teacher + accepted students)
             await Clients.Group(roomId)
                 .SendAsync("ParticipantsUpdated", RoomParticipants[roomId].Keys);
         }
@@ -52,10 +53,14 @@ namespace Virtual_Call_Project_Testing.Hubs
         /* ==============================
            WEBRTC SIGNALING
         ============================== */
-        public async Task SendSignal(string roomId, string userId, object signal)
+        public async Task SendSignal(string roomId, string targetUserId, string senderUserId, object signal)
         {
-            await Clients.OthersInGroup(roomId)
-                .SendAsync("ReceiveSignal", userId, signal);
+            // Send the signal only to the intended recipient
+            if (UserConnections.TryGetValue(targetUserId, out var targetConnection))
+            {
+                await Clients.Client(targetConnection)
+                    .SendAsync("ReceiveSignal", senderUserId, signal);
+            }
         }
 
         /* ==============================
@@ -80,8 +85,19 @@ namespace Virtual_Call_Project_Testing.Hubs
         ============================== */
         public async Task AcceptUser(string roomId, string studentUserId)
         {
-            await Clients.Group(roomId)
-                .SendAsync("UserAccepted", studentUserId);
+            if (UserConnections.TryGetValue(studentUserId, out var studentConnectionId))
+            {
+                // Send acceptance only to the specific student
+                await Clients.Client(studentConnectionId)
+                    .SendAsync("UserAccepted", studentUserId);
+            }
+
+            // Optionally update participants for everyone (teacher UI)
+            if (RoomParticipants.TryGetValue(roomId, out var participants))
+            {
+                await Clients.Clients(RoomTeachers.Values)
+                    .SendAsync("ParticipantsUpdated", participants.Keys);
+            }
         }
 
         /* ==============================
@@ -108,6 +124,7 @@ namespace Virtual_Call_Project_Testing.Hubs
             {
                 UserConnections.TryRemove(disconnectedUser, out _);
 
+                // Remove from all rooms
                 foreach (var room in RoomParticipants)
                 {
                     if (room.Value.ContainsKey(disconnectedUser))
@@ -119,12 +136,14 @@ namespace Virtual_Call_Project_Testing.Hubs
                     }
                 }
 
+                // Remove teacher if disconnected
                 foreach (var teacher in RoomTeachers)
                 {
                     if (teacher.Value == disconnectedUser)
                     {
                         RoomTeachers.TryRemove(teacher.Key, out _);
                         Console.WriteLine($"TEACHER DISCONNECTED: {teacher.Key}");
+                        // Optionally notify students that teacher left
                         break;
                     }
                 }
