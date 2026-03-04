@@ -1,8 +1,15 @@
+﻿using Microsoft.EntityFrameworkCore;
+using Virtual_Call_Project_Testing.ApplicationContext;
 using Virtual_Call_Project_Testing.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddDbContext<ApplicationDBContext>(o => o.UseSqlServer("Data Source=.;Initial Catalog=VirtualClassRoomDB;Integrated Security=True;Encrypt=True;Trust Server Certificate=True"));
+
+builder.Services.AddControllers();
+
 builder.Services.AddSignalR();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
@@ -20,6 +27,8 @@ var app = builder.Build();
 app.UseRouting();
 
 app.UseCors("AllowFrontend");
+
+app.MapControllers(); // ✅ ADD THIS
 
 app.MapHub<MeetingHub>("/meetingHub");
 
