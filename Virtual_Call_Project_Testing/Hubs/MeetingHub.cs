@@ -5,150 +5,100 @@ namespace Virtual_Call_Project_Testing.Hubs
 {
     public class MeetingHub : Hub
     {
-        // roomId -> teacherUserId
         private static ConcurrentDictionary<string, string> RoomTeachers = new();
-
-        // userId -> connectionId
         private static ConcurrentDictionary<string, string> UserConnections = new();
-
-        // roomId -> list of participants
         private static ConcurrentDictionary<string, ConcurrentDictionary<string, bool>> RoomParticipants = new();
+        private static ConcurrentDictionary<string, ConcurrentDictionary<string, bool>> PendingUsers = new();
 
-        /* ==============================
-           JOIN ROOM
-        ============================== */
         public async Task JoinRoom(string roomId, string userId, string role)
         {
-            await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
-
-            // Map userId to latest connectionId
             UserConnections[userId] = Context.ConnectionId;
 
-            // Add participant to room
-            RoomParticipants.TryAdd(roomId, new ConcurrentDictionary<string, bool>());
-            RoomParticipants[roomId][userId] = true;
-
-            Console.WriteLine($"JOIN: {userId} | {role} | {roomId}");
+            // FIX: Add the user (Teacher OR Student) to the group immediately
+            await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
 
             if (role == "teacher")
             {
                 RoomTeachers[roomId] = userId;
-                Console.WriteLine($"TEACHER REGISTERED: {roomId}");
-            }
+                RoomParticipants.TryAdd(roomId, new());
+                RoomParticipants[roomId][userId] = true;
 
-            // Notify everyone in room about participants (teacher + accepted students)
-            await Clients.Group(roomId)
-                .SendAsync("ParticipantsUpdated", RoomParticipants[roomId].Keys);
-        }
-
-        /* ==============================
-           CHAT
-        ============================== */
-        public async Task SendMessage(string roomId, string userId, string message)
-        {
-            await Clients.Group(roomId)
-                .SendAsync("ReceiveMessage", userId, message);
-        }
-
-        /* ==============================
-           WEBRTC SIGNALING
-        ============================== */
-        public async Task SendSignal(string roomId, string targetUserId, string senderUserId, object signal)
-        {
-            // Send the signal only to the intended recipient
-            if (UserConnections.TryGetValue(targetUserId, out var targetConnection))
-            {
-                await Clients.Client(targetConnection)
-                    .SendAsync("ReceiveSignal", senderUserId, signal);
+                // Refresh list for teacher
+                await Clients.Caller.SendAsync("ParticipantsUpdated", RoomParticipants[roomId].Keys);
             }
         }
 
-        /* ==============================
-           STUDENT REQUEST TO JOIN
-        ============================== */
         public async Task RequestToJoin(string roomId, string studentUserId)
         {
-            Console.WriteLine($"REQUEST FROM {studentUserId} FOR ROOM {roomId}");
+            UserConnections[studentUserId] = Context.ConnectionId;
+            PendingUsers.TryAdd(roomId, new());
+            PendingUsers[roomId][studentUserId] = true;
 
-            if (RoomTeachers.TryGetValue(roomId, out var teacherUserId))
+            if (RoomTeachers.TryGetValue(roomId, out var teacherId) &&
+                UserConnections.TryGetValue(teacherId, out var teacherConnection))
             {
-                if (UserConnections.TryGetValue(teacherUserId, out var teacherConnectionId))
-                {
-                    await Clients.Client(teacherConnectionId)
-                        .SendAsync("JoinRequestReceived", studentUserId);
-                }
+                await Clients.Client(teacherConnection).SendAsync("JoinRequestReceived", studentUserId);
             }
         }
 
-        /* ==============================
-           TEACHER ACCEPT STUDENT
-        ============================== */
         public async Task AcceptUser(string roomId, string studentUserId)
         {
-            if (UserConnections.TryGetValue(studentUserId, out var studentConnectionId))
-            {
-                // Send acceptance only to the specific student
-                await Clients.Client(studentConnectionId)
-                    .SendAsync("UserAccepted", studentUserId);
-            }
+            if (PendingUsers.TryGetValue(roomId, out var pending))
+                pending.TryRemove(studentUserId, out _);
 
-            // Optionally update participants for everyone (teacher UI)
-            if (RoomParticipants.TryGetValue(roomId, out var participants))
+            RoomParticipants.TryAdd(roomId, new());
+            RoomParticipants[roomId][studentUserId] = true;
+
+            if (UserConnections.TryGetValue(studentUserId, out var studentConn))
             {
-                await Clients.Clients(RoomTeachers.Values)
-                    .SendAsync("ParticipantsUpdated", participants.Keys);
+                // Ensure student is in the group
+                await Groups.AddToGroupAsync(studentConn, roomId);
+
+                // FIX: Broadcast to the whole GROUP so the Teacher's UI also updates
+                await Clients.Group(roomId).SendAsync("UserAccepted", studentUserId);
+                await Clients.Group(roomId).SendAsync("ParticipantsUpdated", RoomParticipants[roomId].Keys);
             }
         }
 
-        /* ==============================
-           TEACHER REJECT STUDENT
-        ============================== */
         public async Task RejectUser(string roomId, string studentUserId)
         {
-            if (UserConnections.TryGetValue(studentUserId, out var studentConnectionId))
+            if (PendingUsers.TryGetValue(roomId, out var pending))
+                pending.TryRemove(studentUserId, out _);
+
+            if (UserConnections.TryGetValue(studentUserId, out var studentConn))
             {
-                await Clients.Client(studentConnectionId)
-                    .SendAsync("UserRejected", studentUserId);
+                await Clients.Client(studentConn).SendAsync("UserRejected", studentUserId);
             }
         }
 
-        /* ==============================
-           USER DISCONNECTED
-        ============================== */
-        public override async Task OnDisconnectedAsync(Exception exception)
+        public async Task SendMessage(string roomId, string userId, string message)
         {
-            var disconnectedUser = UserConnections
-                .FirstOrDefault(x => x.Value == Context.ConnectionId).Key;
+            await Clients.Group(roomId).SendAsync("ReceiveMessage", userId, message);
+        }
 
-            if (!string.IsNullOrEmpty(disconnectedUser))
+        public async Task SendSignal(string roomId, string targetUserId, string senderUserId, object signal)
+        {
+            if (UserConnections.TryGetValue(targetUserId, out var connectionId))
             {
-                UserConnections.TryRemove(disconnectedUser, out _);
+                await Clients.Client(connectionId).SendAsync("ReceiveSignal", senderUserId, signal);
+            }
+        }
 
-                // Remove from all rooms
+        public override async Task OnDisconnectedAsync(Exception? exception)
+        {
+            var user = UserConnections.FirstOrDefault(x => x.Value == Context.ConnectionId).Key;
+            if (!string.IsNullOrEmpty(user))
+            {
+                UserConnections.TryRemove(user, out _);
                 foreach (var room in RoomParticipants)
                 {
-                    if (room.Value.ContainsKey(disconnectedUser))
+                    if (room.Value.TryRemove(user, out _))
                     {
-                        room.Value.TryRemove(disconnectedUser, out _);
-
-                        await Clients.Group(room.Key)
-                            .SendAsync("ParticipantsUpdated", room.Value.Keys);
-                    }
-                }
-
-                // Remove teacher if disconnected
-                foreach (var teacher in RoomTeachers)
-                {
-                    if (teacher.Value == disconnectedUser)
-                    {
-                        RoomTeachers.TryRemove(teacher.Key, out _);
-                        Console.WriteLine($"TEACHER DISCONNECTED: {teacher.Key}");
-                        // Optionally notify students that teacher left
-                        break;
+                        await Clients.Group(room.Key).SendAsync("UserDisconnected", user);
+                        await Clients.Group(room.Key).SendAsync("ParticipantsUpdated", room.Value.Keys);
                     }
                 }
             }
-
             await base.OnDisconnectedAsync(exception);
         }
     }
