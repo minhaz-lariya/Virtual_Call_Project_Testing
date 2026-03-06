@@ -132,5 +132,18 @@ namespace Virtual_Call_Project_Testing.Controllers
             var data = await _dbContext.Faculties.ToListAsync();
             return Ok(new { Status = "OK", Result = data });
         }
+
+        // ================= GET PROFILE =================
+        [HttpGet("getProfile/{id}")]
+        public async Task<IActionResult> GetProfile(int id)
+        {
+            var faculty = await _dbContext.Faculties.FirstOrDefaultAsync(x => x.Id == id);
+
+            if (faculty == null)
+                return Ok(new { Status = "Fail", Result = "User Not Found" });
+
+            return Ok(new { Status = "OK", Result = faculty });
+        }
+
     }
 }

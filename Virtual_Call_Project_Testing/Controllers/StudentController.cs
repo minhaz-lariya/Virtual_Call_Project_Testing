@@ -142,5 +142,25 @@ namespace Virtual_Call_Project_Testing.Controllers
             var data = await _dbContext.Students.ToListAsync();
             return Ok(new { Status = "OK", Result = data });
         }
+
+        [HttpGet("list/{semester}")]
+        public async Task<IActionResult> List(string semester)
+        {
+            var data = await _dbContext.Students.Where(o=> o.Semester == semester).ToListAsync();
+            return Ok(new { Status = "OK", Result = data });
+        }
+
+        // ================= GET PROFILE =================
+        [HttpGet("getProfile/{id}")]
+        public async Task<IActionResult> GetProfile(int id)
+        {
+            var student = await _dbContext.Students.FirstOrDefaultAsync(x => x.Id == id);
+
+            if (student == null)
+                return Ok(new { Status = "Fail", Result = "User Not Found" });
+
+            return Ok(new { Status = "OK", Result = student });
+        }
+
     }
 }

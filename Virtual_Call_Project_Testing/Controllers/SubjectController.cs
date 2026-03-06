@@ -64,5 +64,25 @@ namespace Virtual_Call_Project_Testing.Controllers
             var subjects = await _dbContext.Subjects.ToListAsync();
             return Ok(new { Status = "OK", Result = subjects });
         }
+
+        [HttpGet("list/{semester}")]
+        public async Task<IActionResult> List(string semester)
+        {
+            var subjects = await _dbContext.FacultySubjects
+            .Select(o=> new
+            {
+                o.Subject!.SubjectName,
+                o.Subject!.SubjectCode,
+                o.Subject!.Semester,
+                o.Subject!.Id,
+                o.Subject!.Credits,
+                faculty = new
+                {
+                    o.Faculty!.Id,
+                    o.Faculty!.FullName,
+                }
+            }).ToListAsync();
+            return Ok(new { Status = "OK", Result = subjects });
+        }
     }
 }

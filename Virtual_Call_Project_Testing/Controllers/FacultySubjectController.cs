@@ -102,6 +102,29 @@ namespace Virtual_Call_Project_Testing.Controllers
             return Ok(new { Status = "OK", Result = data });
         }
 
+
+        [HttpGet("allocatedSubjects/{Id}")]
+        public async Task<IActionResult> allocatedSubjects(int Id)
+        {
+            var data = await _dbContext.FacultySubjects
+                .Where(o=> o.FacultyId == Id)
+                .Include(s => s.Subject)
+                .Select(x => new
+                {
+                    x.Id,
+                    x.FacultyId,
+                    subjects =new  {
+                        x.Subject!.Id,
+                        x.Subject!.SubjectCode,
+                        x.Subject!.SubjectName,
+                        x.Subject!.Semester
+                    },
+                    x.AssignedDate
+                }).ToListAsync();
+
+            return Ok(new { Status = "OK", Result = data });
+        }
+
         // ================= REMOVE ASSIGNMENT =================
         [HttpPost("remove")]
         public async Task<IActionResult> RemoveAssignment(int fsId)
