@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Virtual_Call_Project_Testing.ApplicationContext;
 
@@ -11,9 +12,11 @@ using Virtual_Call_Project_Testing.ApplicationContext;
 namespace Virtual_Call_Project_Testing.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    partial class ApplicationDBContextModelSnapshot : ModelSnapshot
+    [Migration("20260309012701_question_master_add")]
+    partial class question_master_add
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -55,87 +58,6 @@ namespace Virtual_Call_Project_Testing.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("AdminMasters");
-                });
-
-            modelBuilder.Entity("Virtual_Call_Project_Testing.Model.AssignmentSubmit", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AssignmentsId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("FilePath")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("MarksObtained")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Remarks")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("StudentId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("SubmittedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("uploadedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AssignmentsId");
-
-                    b.HasIndex("StudentId");
-
-                    b.ToTable("AssignmentSubmits");
-                });
-
-            modelBuilder.Entity("Virtual_Call_Project_Testing.Model.Assignments", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("Deadline")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("FacultyId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("FilePath")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("SubjectId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("TotalMarks")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FacultyId");
-
-                    b.HasIndex("SubjectId");
-
-                    b.ToTable("Assignments");
                 });
 
             modelBuilder.Entity("Virtual_Call_Project_Testing.Model.Faculty", b =>
@@ -250,44 +172,6 @@ namespace Virtual_Call_Project_Testing.Migrations
                     b.ToTable("QuestionMasters");
                 });
 
-            modelBuilder.Entity("Virtual_Call_Project_Testing.Model.QuizAttempt", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AnsweredQuestions")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("QuizMasterId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("Score")
-                        .HasColumnType("int");
-
-                    b.Property<int>("StudentId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TotalQuestions")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("Warnings")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("QuizMasterId");
-
-                    b.HasIndex("StudentId");
-
-                    b.ToTable("QuizAttempts");
-                });
-
             modelBuilder.Entity("Virtual_Call_Project_Testing.Model.QuizMaster", b =>
                 {
                     b.Property<int>("Id")
@@ -384,47 +268,6 @@ namespace Virtual_Call_Project_Testing.Migrations
                     b.ToTable("Students");
                 });
 
-            modelBuilder.Entity("Virtual_Call_Project_Testing.Model.StudyMaterial", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("FacultyId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("FilePath")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FileType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("SubjectId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("UploadedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FacultyId");
-
-                    b.HasIndex("SubjectId");
-
-                    b.ToTable("StudyMaterial");
-                });
-
             modelBuilder.Entity("Virtual_Call_Project_Testing.Model.Subject", b =>
                 {
                     b.Property<int>("Id")
@@ -454,44 +297,6 @@ namespace Virtual_Call_Project_Testing.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Subjects");
-                });
-
-            modelBuilder.Entity("Virtual_Call_Project_Testing.Model.AssignmentSubmit", b =>
-                {
-                    b.HasOne("Virtual_Call_Project_Testing.Model.Assignments", "Assignment")
-                        .WithMany()
-                        .HasForeignKey("AssignmentsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Virtual_Call_Project_Testing.Model.Student", "Student")
-                        .WithMany()
-                        .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Assignment");
-
-                    b.Navigation("Student");
-                });
-
-            modelBuilder.Entity("Virtual_Call_Project_Testing.Model.Assignments", b =>
-                {
-                    b.HasOne("Virtual_Call_Project_Testing.Model.Faculty", "Faculty")
-                        .WithMany()
-                        .HasForeignKey("FacultyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Virtual_Call_Project_Testing.Model.Subject", "Subject")
-                        .WithMany()
-                        .HasForeignKey("SubjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Faculty");
-
-                    b.Navigation("Subject");
                 });
 
             modelBuilder.Entity("Virtual_Call_Project_Testing.Model.FacultySubject", b =>
@@ -524,45 +329,7 @@ namespace Virtual_Call_Project_Testing.Migrations
                     b.Navigation("QuizMaster");
                 });
 
-            modelBuilder.Entity("Virtual_Call_Project_Testing.Model.QuizAttempt", b =>
-                {
-                    b.HasOne("Virtual_Call_Project_Testing.Model.QuizMaster", "QuizMaster")
-                        .WithMany()
-                        .HasForeignKey("QuizMasterId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Virtual_Call_Project_Testing.Model.Student", "Student")
-                        .WithMany()
-                        .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("QuizMaster");
-
-                    b.Navigation("Student");
-                });
-
             modelBuilder.Entity("Virtual_Call_Project_Testing.Model.QuizMaster", b =>
-                {
-                    b.HasOne("Virtual_Call_Project_Testing.Model.Faculty", "Faculty")
-                        .WithMany()
-                        .HasForeignKey("FacultyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Virtual_Call_Project_Testing.Model.Subject", "Subject")
-                        .WithMany()
-                        .HasForeignKey("SubjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Faculty");
-
-                    b.Navigation("Subject");
-                });
-
-            modelBuilder.Entity("Virtual_Call_Project_Testing.Model.StudyMaterial", b =>
                 {
                     b.HasOne("Virtual_Call_Project_Testing.Model.Faculty", "Faculty")
                         .WithMany()

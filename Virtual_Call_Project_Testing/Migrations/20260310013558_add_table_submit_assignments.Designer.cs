@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Virtual_Call_Project_Testing.ApplicationContext;
 
@@ -11,9 +12,11 @@ using Virtual_Call_Project_Testing.ApplicationContext;
 namespace Virtual_Call_Project_Testing.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    partial class ApplicationDBContextModelSnapshot : ModelSnapshot
+    [Migration("20260310013558_add_table_submit_assignments")]
+    partial class add_table_submit_assignments
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -274,9 +277,6 @@ namespace Virtual_Call_Project_Testing.Migrations
                         .HasColumnType("int");
 
                     b.Property<int>("TotalQuestions")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("Warnings")
                         .HasColumnType("int");
 
                     b.HasKey("Id");

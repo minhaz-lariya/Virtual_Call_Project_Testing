@@ -27,7 +27,7 @@ var app = builder.Build();
 app.UseRouting();
 
 app.UseCors("AllowFrontend");
-
+app.UseStaticFiles();
 app.MapControllers(); // ✅ ADD THIS
 
 app.MapHub<MeetingHub>("/meetingHub");

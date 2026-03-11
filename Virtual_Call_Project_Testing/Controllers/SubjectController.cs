@@ -65,6 +65,13 @@ namespace Virtual_Call_Project_Testing.Controllers
             return Ok(new { Status = "OK", Result = subjects });
         }
 
+        [HttpGet("list/unsign")]
+        public async Task<IActionResult> Unsign()
+        {
+            var subjects = await _dbContext.Subjects.Where(o => !(_dbContext.FacultySubjects.Select(k => k.SubjectId).Contains(o.Id))).ToListAsync();
+            return Ok(new { Status = "OK", Result = subjects });
+        }
+
         [HttpGet("list/{semester}")]
         public async Task<IActionResult> List(string semester)
         {
